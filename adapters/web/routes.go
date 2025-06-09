@@ -11,6 +11,6 @@ func AccountRouter(controller ports.AccountController, e *echo.Echo) {
 	e.GET("/accounts/:accountId", controller.FindById)
 }
 
-func TransferRouter(controller ports.TransactionController, e *echo.Echo) {
+func TransactionRouter(controller ports.TransactionController, e *echo.Echo) {
 	e.POST("/transactions", controller.Save)
 }

@@ -20,7 +20,7 @@ func (repository *TransactionRepositoryPostgre) Save(ctx context.Context, tx por
 
 	var transactionId int64
 	query := `
-            INSERT INTO transactions (from_id, to_id, amount)
+            INSERT INTO transactions (source_id, destination_id, amount)
             VALUES ($1, $2, $3)
 			RETURNING id`
 	err := tx.QueryRowContext(ctx, query, transaction.SourceAccountID, transaction.DestinationAccountID, transaction.Amount).Scan(&transactionId)

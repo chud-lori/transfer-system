@@ -94,7 +94,7 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	}
 
 	accountResponse := &dto.WebResponse{
-		Message: "success create account",
+		Message: "",
 		Status:  1,
 		Data:    nil,
 	}

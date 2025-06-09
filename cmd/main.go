@@ -36,6 +36,7 @@ func main() {
 
 	ctxTimeout := time.Duration(60) * time.Second
 
+	// Initialize repositories and services for account
 	accountRepository := &repositories.AccountRepositoryPostgre{
 		DB: db,
 	}
@@ -48,9 +49,24 @@ func main() {
 		AccountService: accountService,
 	}
 
+	// Initialize repositories and services for transaction
+	transactionRepository := &repositories.TransactionRepositoryPostgre{
+		DB: db,
+	}
+	transactionService := &services.TransactionServiceImpl{
+		DB:                    db,
+		TransactionRepository: transactionRepository,
+		AccountRepository:     accountRepository,
+		CtxTimeout:            ctxTimeout,
+	}
+	transactionController := &controllers.TransactionController{
+		TransactionService: transactionService,
+	}
+
 	e := echo.New()
 
 	web.AccountRouter(accountController, e)
+	web.TransactionRouter(transactionController, e)
 
 	e.Use(logger.LogTrafficMiddleware)
 

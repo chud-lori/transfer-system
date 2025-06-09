@@ -38,7 +38,7 @@ func (repository *AccountRepositoryPostgre) Save(ctx context.Context, tx ports.T
 func (r *AccountRepositoryPostgre) FindById(ctx context.Context, tx ports.Transaction, id int64) (*entities.Account, error) {
 	logger, _ := ctx.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 	account := &entities.Account{}
-	query := "SELECT id, balance FROM accounts WHERE id = $1"
+	query := "SELECT id, balance FROM accounts WHERE id = $1 FOR UPDATE"
 	err := tx.QueryRowContext(ctx, query, id).Scan(&account.AccountID, &account.Balance)
 
 	if err != nil {

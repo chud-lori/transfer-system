@@ -3,9 +3,8 @@ package utils
 import "regexp"
 
 func ValidateDecimalFormat(input string) bool {
-	// This regex matches numbers like "123", "123.45", "0.00"
-	// It requires at least one digit before the decimal if a decimal is present.
-	// It doesn't allow "123." or ".45"
-	regex := regexp.MustCompile(`^\d+(\.\d+)?$`)
+	// assuming that the input will always in number with 5 digits after the decimal point
+	// e.g. 12345.12345
+	regex := regexp.MustCompile(`^\d+(\.\d{5})?$`)
 	return regex.MatchString(input)
 }

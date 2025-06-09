@@ -21,7 +21,7 @@ type AccountServiceImpl struct {
 	CtxTimeout        time.Duration
 }
 
-func (s *AccountServiceImpl) Save(c context.Context, request *dto.CreateAccountRequest) (*dto.WebResponse, error) {
+func (s *AccountServiceImpl) Save(c context.Context, request *entities.Account) (*dto.WebResponse, error) {
 	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
@@ -52,8 +52,8 @@ func (s *AccountServiceImpl) Save(c context.Context, request *dto.CreateAccountR
 	}
 
 	account := entities.Account{
-		AccountId: request.AccountID,
-		Balance:   request.InitialBalance,
+		AccountID: request.AccountID,
+		Balance:   request.Balance,
 	}
 	_, err = s.AccountRepository.Save(ctx, tx, &account)
 
@@ -96,7 +96,7 @@ func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.Account
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("AccountID %d not found", id)
-			return nil, appErrors.NewBadRequestError("Account id not hehehe found", err)
+			return nil, appErrors.NewBadRequestError("Account id not found", err)
 		}
 
 		logger.WithError(err).Error("Database error")
@@ -104,8 +104,8 @@ func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.Account
 	}
 
 	accountResponse := &dto.AccountResponse{
-		AccountID: accountResult.AccountId,
-		Balance:   accountResult.Balance,
+		AccountID: accountResult.AccountID,
+		Balance:   accountResult.Balance.String(),
 	}
 
 	if err := tx.Commit(); err != nil {

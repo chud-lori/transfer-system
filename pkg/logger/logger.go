@@ -16,7 +16,6 @@ type loggingTraffic struct {
 	statusCode int
 }
 
-// Add this new function at the top
 func NewLogger() *logrus.Logger {
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
@@ -65,7 +64,6 @@ func LogTrafficMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		lrw := NewLoggingTraffic(response.Writer)
 		response.Writer = lrw
 
-		// call the next handler
 		err := next(ctx)
 
 		duration := time.Since(start)

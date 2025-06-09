@@ -1,6 +1,8 @@
 package entities
 
+import "github.com/shopspring/decimal"
+
 type Account struct {
-	AccountId int64  `json:"id"`
-	Balance   string `json:"balance"`
+	AccountID int64           `json:"id"`
+	Balance   decimal.Decimal `json:"balance"`
 }

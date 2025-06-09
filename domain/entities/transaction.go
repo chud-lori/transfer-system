@@ -1,8 +1,10 @@
 package entities
 
+import "github.com/shopspring/decimal"
+
 type Transaction struct {
-	Id                   int64  `json:"id"`
-	SourceAccountId      int64  `json:"source_account_id"`
-	DestinationAccountID int64  `json:"destination_account_id"`
-	Amount               string `json:"amount"`
+	Id                   int64
+	SourceAccountID      int64
+	DestinationAccountID int64
+	Amount               decimal.Decimal
 }

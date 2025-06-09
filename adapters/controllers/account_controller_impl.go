@@ -7,12 +7,14 @@ import (
 
 	"transfer-system/adapters/web"
 	"transfer-system/adapters/web/dto"
+	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
 	appErrors "transfer-system/pkg/errors"
 	"transfer-system/pkg/logger"
-	"transfer-system/pkg/utils"
+	"transfer-system/pkg/validator"
 
 	"github.com/labstack/echo/v4"
+	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,7 +24,7 @@ type AccountController struct {
 
 func (controller *AccountController) Create(ctx echo.Context) error {
 	logger, _ := ctx.Request().Context().Value(logger.LoggerContextKey).(*logrus.Entry)
-	accountRequest := dto.CreateAccountRequest{}
+	accountRequest := dto.AccountRequest{}
 
 	if err := web.GetPayload(ctx, &accountRequest); err != nil {
 		return ctx.JSON(http.StatusBadRequest, dto.WebResponse{
@@ -32,8 +34,8 @@ func (controller *AccountController) Create(ctx echo.Context) error {
 		})
 	}
 
-	if !utils.ValidateDecimalFormat(accountRequest.InitialBalance) {
-		logger.Errorf("Invalid initial balance format: %s", accountRequest.InitialBalance)
+	if !validator.ValidateDecimalFormat(accountRequest.Balance) {
+		logger.Errorf("Invalid initial balance format: %s", accountRequest.Balance)
 		return ctx.JSON(http.StatusBadRequest, dto.WebResponse{
 			Message: "Invalid initial balance format",
 			Status:  0,
@@ -41,7 +43,22 @@ func (controller *AccountController) Create(ctx echo.Context) error {
 		})
 	}
 
-	accountResponse, err := controller.AccountService.Save(ctx.Request().Context(), &accountRequest)
+	initialBalanceDecimal, err := decimal.NewFromString(accountRequest.Balance)
+	if err != nil {
+		logger.WithError(err).Error("Failed to parse initial balance")
+		return ctx.JSON(http.StatusInternalServerError, dto.WebResponse{
+			Message: "An internal error occurred while processing balance.",
+			Status:  0,
+			Data:    nil,
+		})
+	}
+
+	internalServiceRequest := &entities.Account{
+		AccountID: accountRequest.AccountID,
+		Balance:   initialBalanceDecimal,
+	}
+
+	accountResponse, err := controller.AccountService.Save(ctx.Request().Context(), internalServiceRequest)
 
 	if err != nil {
 		var appErr *appErrors.AppError

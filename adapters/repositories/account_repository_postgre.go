@@ -23,13 +23,13 @@ func (repository *AccountRepositoryPostgre) Save(ctx context.Context, tx ports.T
             INSERT INTO accounts (id, balance)
             VALUES ($1, $2)
             RETURNING id`
-	err := tx.QueryRowContext(ctx, query, account.AccountId, account.Balance).Scan(&id)
+	err := tx.QueryRowContext(ctx, query, account.AccountID, account.Balance).Scan(&id)
 	if err != nil {
 		logger.WithError(err).Error("Failed to insert account")
 		return nil, err
 	}
 
-	account.AccountId = id
+	account.AccountID = id
 	account.Balance = account.Balance
 
 	return account, nil
@@ -39,7 +39,7 @@ func (r *AccountRepositoryPostgre) FindById(ctx context.Context, tx ports.Transa
 	logger, _ := ctx.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 	account := &entities.Account{}
 	query := "SELECT id, balance FROM accounts WHERE id = $1"
-	err := tx.QueryRowContext(ctx, query, id).Scan(&account.AccountId, &account.Balance)
+	err := tx.QueryRowContext(ctx, query, id).Scan(&account.AccountID, &account.Balance)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

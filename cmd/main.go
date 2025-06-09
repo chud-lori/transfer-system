@@ -36,27 +36,23 @@ func main() {
 
 	ctxTimeout := time.Duration(60) * time.Second
 
-	// userRepository, _ := repositories.NewUserRepositoryPostgre(db)
-	userRepository := &repositories.UserRepositoryPostgre{
+	accountRepository := &repositories.AccountRepositoryPostgre{
 		DB: db,
 	}
-	// userService := services.NewUserService(db, userRepository, ctxTimeout)
-	userService := &services.UserServiceImpl{
-		DB:             db,
-		UserRepository: userRepository,
-		CtxTimeout:     ctxTimeout,
+	accountService := &services.AccountServiceImpl{
+		DB:                db,
+		AccountRepository: accountRepository,
+		CtxTimeout:        ctxTimeout,
 	}
-	// userController := controllers.NewUserController(userService)
-	userController := &controllers.UserController{
-		UserService: userService,
+	accountController := &controllers.AccountController{
+		AccountService: accountService,
 	}
 
 	e := echo.New()
 
-	web.UserRouter(userController, e)
+	web.AccountRouter(accountController, e)
 
 	e.Use(logger.LogTrafficMiddleware)
-	// e.Use(APIKeyMiddleware)
 
 	// Run server in a goroutine
 	go func() {

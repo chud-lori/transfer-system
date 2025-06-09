@@ -56,9 +56,9 @@ func LogTrafficMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		baseLogger.SetFormatter(&logrus.JSONFormatter{})
 		baseLogger.SetLevel(logrus.InfoLevel)
 		baseLogger.SetOutput(os.Stdout)
+		baseLogger.SetReportCaller(true)
 
 		logger := baseLogger.WithField("RequestID", requestID)
-
 		newCtx := context.WithValue(request.Context(), "logger", logger)
 		ctx.SetRequest(request.WithContext(newCtx))
 
@@ -67,14 +67,6 @@ func LogTrafficMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// call the next handler
 		err := next(ctx)
-
-		// TODO: if showing source in log
-		// baseLogger.SetReportCaller(true)
-		//_, file, line, ok := runtime.Caller(1)
-		//source := "unknown"
-		//if ok {
-		//    source = fmt.Sprintf("%s:%d", file, line)
-		//}
 
 		duration := time.Since(start)
 

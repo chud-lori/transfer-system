@@ -94,6 +94,11 @@ func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.Account
 
 	accountResult, err := s.AccountRepository.FindById(ctx, tx, id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Errorf("AccountID %d not found", id)
+			return nil, appErrors.NewBadRequestError("Account id not hehehe found", err)
+		}
+
 		logger.WithError(err).Error("Database error")
 		return nil, err
 	}

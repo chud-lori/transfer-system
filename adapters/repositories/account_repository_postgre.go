@@ -3,29 +3,29 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"time"
 
 	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
+	"transfer-system/pkg/logger"
 
 	"github.com/sirupsen/logrus"
 )
 
 type AccountRepositoryPostgre struct {
-	DB     ports.Database
-	logger *logrus.Entry
+	DB ports.Database
 }
 
 func (repository *AccountRepositoryPostgre) Save(ctx context.Context, tx ports.Transaction, account *entities.Account) (*entities.Account, error) {
+	logger, _ := ctx.Value(logger.LoggerContextKey).(logrus.FieldLogger)
+
 	var id int64
-	var createdAt time.Time
 	query := `
-            INSERT INTO accounts (balance)
-            VALUES ($1)
-            RETURNING id, balance`
-	err := tx.QueryRowContext(ctx, query, account.Balance).Scan(&id, &createdAt)
+            INSERT INTO accounts (id, balance)
+            VALUES ($1, $2)
+            RETURNING id`
+	err := tx.QueryRowContext(ctx, query, account.AccountId, account.Balance).Scan(&id)
 	if err != nil {
+		logger.WithError(err).Error("Failed to insert account")
 		return nil, err
 	}
 
@@ -36,14 +36,16 @@ func (repository *AccountRepositoryPostgre) Save(ctx context.Context, tx ports.T
 }
 
 func (r *AccountRepositoryPostgre) FindById(ctx context.Context, tx ports.Transaction, id int64) (*entities.Account, error) {
+	logger, _ := ctx.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 	account := &entities.Account{}
 	query := "SELECT id, balance FROM accounts WHERE id = $1"
 	err := tx.QueryRowContext(ctx, query, id).Scan(&account.AccountId, &account.Balance)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("account not found")
+			return nil, err
 		}
+		logger.WithError(err).Error("Failed to query account by ID")
 		return nil, err
 	}
 

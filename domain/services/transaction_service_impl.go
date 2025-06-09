@@ -2,11 +2,17 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
+	appErrors "transfer-system/pkg/errors"
+	"transfer-system/pkg/logger"
+
+	"github.com/sirupsen/logrus"
 )
 
 type TransactionServiceImpl struct {
@@ -17,6 +23,8 @@ type TransactionServiceImpl struct {
 }
 
 func (s *TransactionServiceImpl) Save(c context.Context, request *dto.TransactionRequest) (*dto.WebResponse, error) {
+	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
+
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
 	defer cancel()
 
@@ -32,17 +40,15 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *dto.Transactio
 	}()
 
 	// check if balance is sufficient
-
-	// account, err = s.AccountRepository.FindById(ctx, tx, request.AccountID)
-	// if err != nil {
-	// 	if errors.Is(err, sql.ErrNoRows) {
-
-	// 	} else {
-	// 		return nil, err
-	// 	}
-	// } else {
-	// 	return nil, errors.New("Id already exists")
-	// }
+	sourceAccount, err := s.AccountRepository.FindById(ctx, tx, request.SourceAccountID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Errorf("AccountID %d not found", request.SourceAccountID)
+			return nil, appErrors.NewBadRequestError("AccountId already exists", err)
+		}
+		logger.WithError(err).Error("Database error")
+		return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)
+	}
 
 	transaction := entities.Transaction{
 		Id:                   0,

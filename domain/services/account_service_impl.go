@@ -9,6 +9,10 @@ import (
 	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
+	appErrors "transfer-system/pkg/errors"
+	"transfer-system/pkg/logger"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AccountServiceImpl struct {
@@ -18,6 +22,8 @@ type AccountServiceImpl struct {
 }
 
 func (s *AccountServiceImpl) Save(c context.Context, request *dto.CreateAccountRequest) (*dto.WebResponse, error) {
+	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
+
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
 	defer cancel()
 
@@ -37,10 +43,12 @@ func (s *AccountServiceImpl) Save(c context.Context, request *dto.CreateAccountR
 		if errors.Is(err, sql.ErrNoRows) {
 
 		} else {
-			return nil, err
+			logger.WithError(err).Error("Database error")
+			return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)
 		}
 	} else {
-		return nil, errors.New("Id already exists")
+		logger.Errorf("AccountID %d already exists", request.AccountID)
+		return nil, appErrors.NewBadRequestError("AccountId already exists", err)
 	}
 
 	account := entities.Account{
@@ -50,6 +58,7 @@ func (s *AccountServiceImpl) Save(c context.Context, request *dto.CreateAccountR
 	_, err = s.AccountRepository.Save(ctx, tx, &account)
 
 	if err != nil {
+		logger.WithError(err).Error("Database error")
 		return nil, err
 	}
 
@@ -67,6 +76,8 @@ func (s *AccountServiceImpl) Save(c context.Context, request *dto.CreateAccountR
 }
 
 func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.AccountResponse, error) {
+	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
+
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
 	defer cancel()
 
@@ -83,6 +94,7 @@ func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.Account
 
 	accountResult, err := s.AccountRepository.FindById(ctx, tx, id)
 	if err != nil {
+		logger.WithError(err).Error("Database error")
 		return nil, err
 	}
 

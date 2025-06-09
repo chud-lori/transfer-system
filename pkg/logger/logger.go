@@ -25,6 +25,8 @@ func NewLogger() *logrus.Logger {
 	return logger
 }
 
+const LoggerContextKey string = "logger"
+
 func NewLoggingTraffic(w http.ResponseWriter) *loggingTraffic {
 	return &loggingTraffic{
 		ResponseWriter: w,
@@ -65,7 +67,6 @@ func LogTrafficMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// call the next handler
 		err := next(ctx)
-		// next.ServeHTTP(lrw, r)
 
 		// TODO: if showing source in log
 		// baseLogger.SetReportCaller(true)

@@ -1,12 +1,16 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"transfer-system/adapters/web"
 	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/ports"
+	appErrors "transfer-system/pkg/errors"
+	"transfer-system/pkg/logger"
+	"transfer-system/pkg/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -17,7 +21,7 @@ type AccountController struct {
 }
 
 func (controller *AccountController) Create(ctx echo.Context) error {
-	logger, _ := ctx.Request().Context().Value("logger").(*logrus.Entry)
+	logger, _ := ctx.Request().Context().Value(logger.LoggerContextKey).(*logrus.Entry)
 	accountRequest := dto.CreateAccountRequest{}
 
 	if err := web.GetPayload(ctx, &accountRequest); err != nil {
@@ -28,11 +32,32 @@ func (controller *AccountController) Create(ctx echo.Context) error {
 		})
 	}
 
+	if !utils.ValidateDecimalFormat(accountRequest.InitialBalance) {
+		logger.Errorf("Invalid initial balance format: %s", accountRequest.InitialBalance)
+		return ctx.JSON(http.StatusBadRequest, dto.WebResponse{
+			Message: "Invalid initial balance format",
+			Status:  0,
+			Data:    nil,
+		})
+	}
+
 	accountResponse, err := controller.AccountService.Save(ctx.Request().Context(), &accountRequest)
 
 	if err != nil {
-		logger.Info("Error create controller")
-		panic(err)
+		var appErr *appErrors.AppError
+		if errors.As(err, &appErr) {
+			return ctx.JSON(appErr.StatusCode, dto.WebResponse{
+				Message: appErr.Message,
+				Status:  0,
+				Data:    nil,
+			})
+		} else {
+			return ctx.JSON(http.StatusInternalServerError, dto.WebResponse{
+				Message: "An unexpected error occurred",
+				Status:  0,
+				Data:    nil,
+			})
+		}
 	}
 
 	response := dto.WebResponse{
@@ -64,7 +89,7 @@ func (c *AccountController) FindById(ctx echo.Context) error {
 		logger.Error("Error find by id controller: ", err)
 
 		return ctx.JSON(http.StatusNotFound, dto.WebResponse{
-			Message: "Failed get account id",
+			Message: "Account id not found",
 			Status:  0,
 			Data:    nil,
 		})

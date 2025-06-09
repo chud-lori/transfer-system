@@ -1,0 +1,91 @@
+# Compiled binaries for the current project
+# Go binaries are often named after the project/module directory or main package
+# e.g., if your module is 'github.com/myuser/myproject', the binary might be 'myproject'
+# Or if you have a main package in 'cmd/myapp', the binary might be 'myapp'
+# It's good practice to list your expected binary names here.
+# For example, if your main executable is named `myapp`:
+# myapp
+# myapp.exe # For Windows
+
+# Go build artifacts
+# These are temporary files created by `go build` and `go test`
+*.o
+*.so
+*.dll
+*.wasm
+*.obj
+*.exe
+*.test
+*.prof
+
+# Dependency directories
+# The 'vendor' directory stores vendored dependencies if you're using Go Modules
+# This is usually committed unless explicitly told otherwise for a specific project.
+# If you don't want to commit vendored dependencies, uncomment the line below.
+# vendor/
+
+# Test cache directory
+# Go stores test results and build caches here
+.go/
+go.work.sum
+
+# IDE and Editor specific files
+# VS Code
+.vscode/
+
+# IntelliJ/GoLand
+.idea/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*.swn
+*.bak
+*~
+
+# Emacs
+#*#
+
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux/Unix specific files
+# No special patterns commonly needed beyond general temporary files
+
+# Environment variables files (often sensitive)
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+logs/
+
+# Database files (if not part of a dedicated data directory)
+*.db
+*.sqlite3
+
+# Other temporary files
+tmp/
+*.tmp
+*.bak
+*.old
+*.out
+
+# Crash dump files
+*.dmp

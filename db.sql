@@ -1,5 +1,5 @@
 create table accounts (
-    id primary key,
+    id integer primary key,
     balance NUMERIC(20, 5) NOT NULL DEFAULT 0.00000,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

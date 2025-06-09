@@ -1,15 +1,21 @@
 package web
 
 import (
-	"net/http"
-
 	"transfer-system/domain/ports"
+
+	"github.com/labstack/echo/v4"
 )
 
-func UserRouter(controller ports.UserController, serve *http.ServeMux) {
-	serve.HandleFunc("POST /api/user", controller.Create)
-	serve.HandleFunc("PUT /api/user", controller.Update)
-	serve.HandleFunc("DELETE /api/user/{userId}", controller.Delete)
-	serve.HandleFunc("GET /api/user/{userId}", controller.FindById)
-	serve.HandleFunc("GET /api/user", controller.FindAll)
+func UserRouter(controller ports.UserController, e *echo.Echo) {
+	// e.POST("/api/user", controller.Create)
+	// e.PUT("/api/user/:userId", controller.Update)
+	// e.DELETE("/api/user/:userId", controller.Delete)
+	// e.GET("/api/user/:userId", controller.FindById)
+	// e.GET("/api/user", controller.FindAll)
+	e.POST("/accounts", controller.Create)
+	e.GET("/accounts/:accountId", controller.FindById)
+}
+
+func TransferRouter(controller ports.TransferController, e *echo.Echo) {
+	e.POST("/transactions", controller.Transaction)
 }

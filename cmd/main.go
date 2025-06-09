@@ -17,10 +17,10 @@ import (
 	"transfer-system/pkg/logger"
 
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Failed load keys")
@@ -36,37 +36,43 @@ func main() {
 
 	ctxTimeout := time.Duration(60) * time.Second
 
-	userRepository, _ := repositories.NewUserRepositoryPostgre(db)
-	userService := services.NewUserService(db, userRepository, ctxTimeout)
-	userController := controllers.NewUserController(userService)
-
-	router := http.NewServeMux()
-
-	web.UserRouter(userController, router)
-
-	var handler http.Handler = router
-	handler = logger.LogTrafficMiddleware(handler, baseLogger)
-	handler = utils.APIKeyMiddleware(handler, baseLogger)
-
-	server := http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("APP_PORT")),
-		Handler: handler,
+	// userRepository, _ := repositories.NewUserRepositoryPostgre(db)
+	userRepository := &repositories.UserRepositoryPostgre{
+		DB: db,
 	}
+	// userService := services.NewUserService(db, userRepository, ctxTimeout)
+	userService := &services.UserServiceImpl{
+		DB:             db,
+		UserRepository: userRepository,
+		CtxTimeout:     ctxTimeout,
+	}
+	// userController := controllers.NewUserController(userService)
+	userController := &controllers.UserController{
+		UserService: userService,
+	}
+
+	e := echo.New()
+
+	web.UserRouter(userController, e)
+
+	e.Use(logger.LogTrafficMiddleware)
+	// e.Use(APIKeyMiddleware)
 
 	// Run server in a goroutine
 	go func() {
-		// log.Printf("Server is running on port %s", os.Getenv("APP_PORT"))
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
+		log.Printf("Server is running on port %s", os.Getenv("APP_PORT"))
+		if err := e.Start(fmt.Sprintf(":%s", os.Getenv("APP_PORT"))); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatalf("HTTP server error: %v", err)
 		}
 	}()
 
+	// graceful shutdown
 	wait := utils.GracefullShutdown(context.Background(), 5*time.Second, map[string]utils.Operation{
 		"database": func(ctx context.Context) error {
 			return db.Close()
 		},
 		"http-server": func(ctx context.Context) error {
-			return server.Shutdown(ctx)
+			return e.Shutdown(ctx)
 		},
 	})
 

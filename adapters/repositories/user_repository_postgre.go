@@ -14,14 +14,8 @@ import (
 )
 
 type UserRepositoryPostgre struct {
-	db     ports.Database
+	DB     ports.Database
 	logger *logrus.Entry
-}
-
-func NewUserRepositoryPostgre(db ports.Database) (*UserRepositoryPostgre, error) {
-	return &UserRepositoryPostgre{
-		db: db,
-	}, nil
 }
 
 func (repository *UserRepositoryPostgre) Save(ctx context.Context, tx ports.Transaction, user *entities.User) (*entities.User, error) {

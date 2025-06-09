@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,11 +18,11 @@ type loggingTraffic struct {
 
 // Add this new function at the top
 func NewLogger() *logrus.Logger {
-    logger := logrus.New()
-    logger.SetFormatter(&logrus.JSONFormatter{})
-    logger.SetLevel(logrus.InfoLevel)
-    logger.SetOutput(os.Stdout)
-    return logger
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetLevel(logrus.InfoLevel)
+	logger.SetOutput(os.Stdout)
+	return logger
 }
 
 func NewLoggingTraffic(w http.ResponseWriter) *loggingTraffic {
@@ -36,28 +37,38 @@ func (lrw *loggingTraffic) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
-func LogTrafficMiddleware(next http.Handler, baseLogger *logrus.Logger) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func LogTrafficMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
 		start := time.Now()
 
-		requestID := r.Header.Get("X-Request-ID")
+		request := ctx.Request()
+		response := ctx.Response()
+
+		requestID := request.Header.Get("X-Request-ID")
 		if requestID == "" {
 			requestID = uuid.New().String()
 		}
 
+		baseLogger := logrus.New()
+		baseLogger.SetFormatter(&logrus.JSONFormatter{})
+		baseLogger.SetFormatter(&logrus.JSONFormatter{})
+		baseLogger.SetLevel(logrus.InfoLevel)
+		baseLogger.SetOutput(os.Stdout)
+
 		logger := baseLogger.WithField("RequestID", requestID)
 
-		ctx := context.WithValue(r.Context(), "logger", logger)
+		newCtx := context.WithValue(request.Context(), "logger", logger)
+		ctx.SetRequest(request.WithContext(newCtx))
 
-		r = r.WithContext(ctx)
-
-		lrw := NewLoggingTraffic(w)
+		lrw := NewLoggingTraffic(response.Writer)
+		response.Writer = lrw
 
 		// call the next handler
-		next.ServeHTTP(lrw, r)
+		err := next(ctx)
+		// next.ServeHTTP(lrw, r)
 
 		// TODO: if showing source in log
-        // baseLogger.SetReportCaller(true)
+		// baseLogger.SetReportCaller(true)
 		//_, file, line, ok := runtime.Caller(1)
 		//source := "unknown"
 		//if ok {
@@ -67,11 +78,12 @@ func LogTrafficMiddleware(next http.Handler, baseLogger *logrus.Logger) http.Han
 		duration := time.Since(start)
 
 		logger.WithFields(logrus.Fields{
-			"method":   r.Method,
-			"path":     r.URL.Path,
+			"method":   request.Method,
+			"path":     request.URL.Path,
 			"duration": duration.String(),
 			"status":   lrw.statusCode,
 		}).Info("Processed request")
 
-	})
+		return err
+	}
 }

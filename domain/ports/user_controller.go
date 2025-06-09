@@ -1,13 +1,10 @@
 package ports
 
 import (
-	"net/http"
+	"github.com/labstack/echo/v4"
 )
 
 type UserController interface {
-	Create(writer http.ResponseWriter, request *http.Request)
-	Update(writer http.ResponseWriter, request *http.Request)
-	Delete(writer http.ResponseWriter, request *http.Request)
-	FindById(writer http.ResponseWriter, request *http.Request)
-	FindAll(writer http.ResponseWriter, request *http.Request)
+	Create(ctx echo.Context) error
+	FindById(ctx echo.Context) error
 }

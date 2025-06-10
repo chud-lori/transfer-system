@@ -164,7 +164,7 @@ func TestTransactionController_Save_AccountNotFound(t *testing.T) {
 		Amount:               decimal.RequireFromString(reqBody.Amount),
 	}
 
-	appErr := appErrors.NewBadRequestError("AccountID Not Found", nil)
+	appErr := appErrors.NewBadRequestError("Account Not Found", nil)
 	mockService.On("Save", mock.Anything, expectedEntity).Return(appErr)
 
 	err := controller.Save(c)
@@ -174,7 +174,7 @@ func TestTransactionController_Save_AccountNotFound(t *testing.T) {
 	var resp dto.WebResponse
 	err = json.Unmarshal(rec.Body.Bytes(), &resp)
 	assert.NoError(t, err)
-	assert.Equal(t, "AccountID Not Found", resp.Message)
+	assert.Equal(t, "Account Not Found", resp.Message)
 	assert.Equal(t, 0, resp.Status)
 	assert.Nil(t, resp.Data)
 }

@@ -45,7 +45,7 @@ func GracefullShutdown(ctx context.Context, timeout time.Duration, ops map[strin
 
 				log.Printf("cleaning up %s", innerKey)
 				if err := innerOp(ctx); err != nil {
-					log.Printf("%s: clean up failed: %s", innerKey, err.Error())
+					log.Printf("%s: clean up failed: %v", innerKey, err.Error())
 					return
 				}
 				log.Printf("%s was shutdown gracefully", innerKey)

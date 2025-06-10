@@ -23,7 +23,7 @@ utils/            # Helper utilities
 
 ## Prerequisites
 
-- [Go 1.20+](https://go.dev/doc/install)
+- [Go 1.24+](https://go.dev/doc/install)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Docker + Docker Compose](https://docs.docker.com/compose/)
 

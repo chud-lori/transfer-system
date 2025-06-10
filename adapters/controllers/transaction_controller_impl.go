@@ -34,9 +34,9 @@ func (c *TransactionController) Save(ctx echo.Context) error {
 	}
 
 	if !validator.ValidateDecimalFormat(transactionRequest.Amount) {
-		logger.Errorf("Invalid initial balance format: %s", transactionRequest.Amount)
+		logger.Errorf("Invalid amount format: %s", transactionRequest.Amount)
 		return ctx.JSON(http.StatusBadRequest, dto.WebResponse{
-			Message: "Invalid initial balance format",
+			Message: "Invalid amount format",
 			Status:  0,
 			Data:    nil,
 		})

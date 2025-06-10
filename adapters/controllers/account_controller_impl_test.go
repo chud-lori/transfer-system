@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
@@ -25,12 +26,12 @@ type MockAccountService struct {
 
 func (m *MockAccountService) Save(ctx context.Context, acc *entities.Account) error {
 	args := m.Called(ctx, acc)
-	return args.Error(1)
+	return args.Error(0)
 }
 
-func (m *MockAccountService) FindById(ctx context.Context, accountId int64) (*dto.AccountResponse, error) {
+func (m *MockAccountService) FindById(ctx context.Context, accountId int64) (*entities.Account, error) {
 	args := m.Called(ctx, accountId)
-	return args.Get(0).(*dto.AccountResponse), args.Error(1)
+	return args.Get(0).(*entities.Account), args.Error(1)
 }
 
 func TestAccountController_Create_Success(t *testing.T) {
@@ -50,7 +51,12 @@ func TestAccountController_Create_Success(t *testing.T) {
 	c := e.NewContext(req, rec)
 	testutils.InjectLoggerToContext(c)
 
-	mockService.On("Save", mock.Anything, mock.Anything).Return(nil)
+	acc := &entities.Account{
+		AccountID: 12345,
+		Balance:   decimal.NewFromFloat(100.23344),
+	}
+
+	mockService.On("Save", mock.Anything, acc).Return(nil)
 
 	err := controller.Create(c)
 	assert.NoError(t, err)
@@ -88,9 +94,9 @@ func TestAccountController_FindById_Success(t *testing.T) {
 	controller := &AccountController{AccountService: mockService}
 
 	accId := int64(12345)
-	expectedResp := &dto.AccountResponse{
+	expectedResp := &entities.Account{
 		AccountID: accId,
-		Balance:   "100.23344",
+		Balance:   decimal.NewFromFloat(100.23344),
 	}
 	mockService.On("FindById", mock.Anything, accId).Return(expectedResp, nil)
 
@@ -117,7 +123,7 @@ func TestAccountController_FindById_NotFound(t *testing.T) {
 	controller := &AccountController{AccountService: mockService}
 
 	accId := int64(99999)
-	mockService.On("FindById", mock.Anything, accId).Return(&dto.AccountResponse{}, errors.New("not found"))
+	mockService.On("FindById", mock.Anything, accId).Return(&entities.Account{}, errors.New("Account not found"))
 
 	req := httptest.NewRequest(http.MethodGet, "/accounts/99999", nil)
 	rec := httptest.NewRecorder()

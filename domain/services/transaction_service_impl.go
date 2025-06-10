@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
 	appErrors "transfer-system/pkg/errors"
@@ -22,7 +21,7 @@ type TransactionServiceImpl struct {
 	CtxTimeout            time.Duration
 }
 
-func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Transaction) (*dto.WebResponse, error) {
+func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Transaction) error {
 	// TODO: improvment to add identifier id for each transaction from client side to make it idempotent
 	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 
@@ -31,12 +30,13 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 
 	tx, err := s.DB.BeginTx(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// handle panic gracefully
 	defer func() {
 		if r := recover(); r != nil || err != nil {
 			logger.Errorf("Transaction rollback due to error: %v", err)
+			logger.Errorf("Transaction rollback due to panic: %v", r)
 			tx.Rollback()
 		}
 	}()
@@ -46,10 +46,10 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("AccountID %d not found", request.SourceAccountID)
-			return nil, appErrors.NewBadRequestError("AccountID Not Found", err)
+			return appErrors.NewBadRequestError("Account Not Found", err)
 		}
 		logger.WithError(err).Error("Database error")
-		return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)
+		return appErrors.NewInternalServerError("Currently we're facing an issue", err)
 	}
 
 	// check destination account exist
@@ -57,16 +57,18 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("AccountID %d not found", request.SourceAccountID)
-			return nil, appErrors.NewBadRequestError("AccountID Not Found", err)
+			return appErrors.NewBadRequestError("Account Not Found", err)
 		}
 		logger.WithError(err).Error("Database error")
-		return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)
+		return appErrors.NewInternalServerError("Currently we're facing an issue", err)
 	}
 
 	// check if source account has sufficient balance
 	if sourceAccount.Balance.LessThan(request.Amount) {
-		logger.Errorf("Insufficient balance in source account %d", request.SourceAccountID)
-		return nil, appErrors.NewBadRequestError("Insufficient balance", nil)
+		logger.Errorf("Insufficient balance in source account id %d", request.SourceAccountID)
+		// to trigger rollback
+		err = appErrors.NewBadRequestError("Insufficient balance", nil)
+		return err
 	}
 
 	transaction := entities.Transaction{
@@ -78,32 +80,31 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	_, err = s.TransactionRepository.Save(ctx, tx, &transaction)
 
 	if err != nil {
-		return nil, err
+		logger.WithError(err).Error("Failed to save transaction")
+		return err
 	}
+	// logger.Debugf("DEBUG: Calling UpdateBalance for Destination. Tx type: %T, Tx value: %#v, AccountID: %d, Amount: %s", tx, tx, request.DestinationAccountID, request.Amount.String())
 
 	// update balance of source account
 	err = s.TransactionRepository.UpdateBalance(ctx, tx, request.SourceAccountID, request.Amount.Neg())
 
 	if err != nil {
-		return nil, err
+		logger.WithError(err).Error("Failed to update source account balance")
+		return err
 	}
 
 	// update balance of destination account
 	err = s.TransactionRepository.UpdateBalance(ctx, tx, request.DestinationAccountID, request.Amount)
 
 	if err != nil {
-		return nil, err
-	}
-
-	accountResponse := &dto.WebResponse{
-		Message: "",
-		Status:  1,
-		Data:    nil,
+		logger.WithError(err).Error("Failed to update destination account balance")
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		logger.WithError(err).Error("Failed to commit transaction")
+		return err
 	}
 
-	return accountResponse, nil
+	return nil
 }

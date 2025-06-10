@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
 	appErrors "transfer-system/pkg/errors"
@@ -21,7 +20,7 @@ type AccountServiceImpl struct {
 	CtxTimeout        time.Duration
 }
 
-func (s *AccountServiceImpl) Save(c context.Context, request *entities.Account) (*dto.WebResponse, error) {
+func (s *AccountServiceImpl) Save(c context.Context, request *entities.Account) error {
 	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
@@ -29,9 +28,9 @@ func (s *AccountServiceImpl) Save(c context.Context, request *entities.Account) 
 
 	tx, err := s.DB.BeginTx(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	// handle panic gracefully
+
 	defer func() {
 		if r := recover(); r != nil || err != nil {
 			tx.Rollback()
@@ -44,11 +43,11 @@ func (s *AccountServiceImpl) Save(c context.Context, request *entities.Account) 
 
 		} else {
 			logger.WithError(err).Error("Database error")
-			return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)
+			return appErrors.NewInternalServerError("Currently we're facing an issue", err)
 		}
 	} else {
 		logger.Errorf("AccountID %d already exists", request.AccountID)
-		return nil, appErrors.NewBadRequestError("AccountId already exists", err)
+		return appErrors.NewBadRequestError("AccountId already exists", err)
 	}
 
 	account := entities.Account{
@@ -59,23 +58,17 @@ func (s *AccountServiceImpl) Save(c context.Context, request *entities.Account) 
 
 	if err != nil {
 		logger.WithError(err).Error("Database error")
-		return nil, err
-	}
-
-	accountResponse := &dto.WebResponse{
-		Message: "success create account",
-		Status:  1,
-		Data:    nil,
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return err
 	}
 
-	return accountResponse, nil
+	return nil
 }
 
-func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.AccountResponse, error) {
+func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*entities.Account, error) {
 	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
@@ -85,7 +78,7 @@ func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.Account
 	if err != nil {
 		return nil, err
 	}
-	// handle panic gracefully
+
 	defer func() {
 		if r := recover(); r != nil || err != nil {
 			tx.Rollback()
@@ -96,16 +89,16 @@ func (s *AccountServiceImpl) FindById(c context.Context, id int64) (*dto.Account
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("AccountID %d not found", id)
-			return nil, appErrors.NewBadRequestError("Account id not found", err)
+			return nil, appErrors.NewBadRequestError("Account not found", err)
 		}
 
 		logger.WithError(err).Error("Database error")
 		return nil, err
 	}
 
-	accountResponse := &dto.AccountResponse{
+	accountResponse := &entities.Account{
 		AccountID: accountResult.AccountID,
-		Balance:   accountResult.Balance.String(),
+		Balance:   accountResult.Balance,
 	}
 
 	if err := tx.Commit(); err != nil {

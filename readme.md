@@ -64,9 +64,16 @@ then run this
 
 `psql -h <hostname> -p <port> -d <database_name> -U <username> -f db.sql`
 
+
 if you have postgresql as docker container, copy the db.sql to container
+
+
 `docker cp db.sql <container_name>:/tmp/db.sql`
+
+
 and import it
+
+
 `docker exec -it <container_name> psql -U postgres -d <database_name> -f /tmp/db.sql`
 
 ```sh

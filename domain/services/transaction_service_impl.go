@@ -23,6 +23,7 @@ type TransactionServiceImpl struct {
 }
 
 func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Transaction) (*dto.WebResponse, error) {
+	// TODO: improvment to add identifier id for each transaction from client side to make it idempotent
 	logger, _ := c.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 
 	ctx, cancel := context.WithTimeout(c, s.CtxTimeout)
@@ -35,6 +36,7 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	// handle panic gracefully
 	defer func() {
 		if r := recover(); r != nil || err != nil {
+			logger.Errorf("Transaction rollback due to error: %v", err)
 			tx.Rollback()
 		}
 	}()
@@ -44,7 +46,7 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("AccountID %d not found", request.SourceAccountID)
-			return nil, appErrors.NewBadRequestError("AccountId already exists", err)
+			return nil, appErrors.NewBadRequestError("AccountID Not Found", err)
 		}
 		logger.WithError(err).Error("Database error")
 		return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)
@@ -55,7 +57,7 @@ func (s *TransactionServiceImpl) Save(c context.Context, request *entities.Trans
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Errorf("AccountID %d not found", request.SourceAccountID)
-			return nil, appErrors.NewBadRequestError("AccountId already exists", err)
+			return nil, appErrors.NewBadRequestError("AccountID Not Found", err)
 		}
 		logger.WithError(err).Error("Database error")
 		return nil, appErrors.NewInternalServerError("Currently we're facing an issue", err)

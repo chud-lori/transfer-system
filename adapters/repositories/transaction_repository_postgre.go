@@ -34,14 +34,14 @@ func (repository *TransactionRepositoryPostgre) Save(ctx context.Context, tx por
 	return transaction, nil
 }
 
-func (repository *TransactionRepositoryPostgre) UpdateBalance(ctx context.Context, tx ports.Transaction, AccountID int64, amount decimal.Decimal) error {
+func (repository *TransactionRepositoryPostgre) UpdateBalance(ctx context.Context, tx ports.Transaction, accountID int64, amount decimal.Decimal) error {
 	logger, _ := ctx.Value(logger.LoggerContextKey).(logrus.FieldLogger)
 
 	query := `
 			UPDATE accounts
 			SET balance = balance + $1
 			WHERE id = $2`
-	_, err := tx.ExecContext(ctx, query, amount, AccountID)
+	_, err := tx.ExecContext(ctx, query, amount, accountID)
 	if err != nil {
 		logger.WithError(err).Error("Failed to update account balance")
 		return err

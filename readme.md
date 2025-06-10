@@ -10,7 +10,7 @@ A backend API for a transfer system, built with **Go** and **PostgreSQL**, follo
 - PostgreSQL support
 - Logging and graceful shutdown
 
-## 🧾 Project Structure
+## Project Structure
 
 ```
 adapters/         # Controllers, repositories, and web routes

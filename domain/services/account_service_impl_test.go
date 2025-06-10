@@ -1,4 +1,4 @@
-package services
+package services_test
 
 import (
 	"context"
@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"transfer-system/domain/entities"
-	"transfer-system/domain/ports"
+	"transfer-system/domain/services"
+	"transfer-system/mocks"
 	"transfer-system/pkg/logger"
 
 	appErrors "transfer-system/pkg/errors"
@@ -18,65 +19,14 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// -- Mock Definitions --
-
-type MockTransaction struct {
-	mock.Mock
-}
-
-func (m *MockTransaction) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	argsM := m.Called(ctx, query, args)
-	return argsM.Get(0).(sql.Result), argsM.Error(1)
-}
-func (m *MockTransaction) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return &sql.Row{} // stubbed, not used
-}
-func (m *MockTransaction) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return nil, nil // stubbed, not used
-}
-func (m *MockTransaction) Commit() error {
-	return m.Called().Error(0)
-}
-func (m *MockTransaction) Rollback() error {
-	return m.Called().Error(0)
-}
-
-type MockDatabase struct {
-	mock.Mock
-}
-
-func (m *MockDatabase) BeginTx(ctx context.Context) (ports.Transaction, error) {
-	args := m.Called(ctx)
-	return args.Get(0).(ports.Transaction), args.Error(1)
-}
-func (m *MockDatabase) Close() error {
-	return nil
-}
-
-type MockAccountRepository struct {
-	mock.Mock
-}
-
-func (m *MockAccountRepository) FindById(ctx context.Context, tx ports.Transaction, id int64) (*entities.Account, error) {
-	args := m.Called(ctx, tx, id)
-	account, _ := args.Get(0).(*entities.Account)
-	return account, args.Error(1)
-}
-
-func (m *MockAccountRepository) Save(ctx context.Context, tx ports.Transaction, acc *entities.Account) (*entities.Account, error) {
-	args := m.Called(ctx, tx, acc)
-	account, _ := args.Get(0).(*entities.Account)
-	return account, args.Error(1)
-}
-
 func TestAccountService_Save_Success(t *testing.T) {
 	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
-	mockDB := new(MockDatabase)
-	mockRepo := new(MockAccountRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockRepo := new(mocks.MockAccountRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &AccountServiceImpl{
+	service := &services.AccountServiceImpl{
 		DB:                mockDB,
 		AccountRepository: mockRepo,
 		CtxTimeout:        2 * time.Second,
@@ -103,11 +53,11 @@ func TestAccountService_Save_Success(t *testing.T) {
 func TestAccountService_Save_AccountExists(t *testing.T) {
 	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
-	mockDB := new(MockDatabase)
-	mockRepo := new(MockAccountRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockRepo := new(mocks.MockAccountRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &AccountServiceImpl{
+	service := &services.AccountServiceImpl{
 		DB:                mockDB,
 		AccountRepository: mockRepo,
 		CtxTimeout:        time.Second * 2,
@@ -131,11 +81,11 @@ func TestAccountService_Save_AccountExists(t *testing.T) {
 func TestAccountService_FindById_Success(t *testing.T) {
 	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
-	mockDB := new(MockDatabase)
-	mockRepo := new(MockAccountRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockRepo := new(mocks.MockAccountRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &AccountServiceImpl{
+	service := &services.AccountServiceImpl{
 		DB:                mockDB,
 		AccountRepository: mockRepo,
 		CtxTimeout:        time.Second * 2,
@@ -161,11 +111,11 @@ func TestAccountService_FindById_Success(t *testing.T) {
 func TestAccountService_FindById_NotFound(t *testing.T) {
 	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
-	mockDB := new(MockDatabase)
-	mockRepo := new(MockAccountRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockRepo := new(mocks.MockAccountRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &AccountServiceImpl{
+	service := &services.AccountServiceImpl{
 		DB:                mockDB,
 		AccountRepository: mockRepo,
 		CtxTimeout:        time.Second * 2,

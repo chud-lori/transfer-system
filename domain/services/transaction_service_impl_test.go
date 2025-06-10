@@ -1,4 +1,4 @@
-package services
+package services_test
 
 import (
 	"context"
@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"transfer-system/domain/entities"
-	"transfer-system/domain/ports"
+	"transfer-system/domain/services"
 	"transfer-system/internal/testutils"
+	"transfer-system/mocks"
 	appErrors "transfer-system/pkg/errors"
 
 	"github.com/shopspring/decimal"
@@ -16,32 +17,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// -- Mock Definitions --
-
-type MockTransactionRepository struct {
-	mock.Mock
-}
-
-func (m *MockTransactionRepository) Save(ctx context.Context, tx ports.Transaction, trans *entities.Transaction) (*entities.Transaction, error) {
-	args := m.Called(ctx, tx, trans)
-	transaction, _ := args.Get(0).(*entities.Transaction)
-	return transaction, args.Error(1)
-}
-
-func (m *MockTransactionRepository) UpdateBalance(ctx context.Context, tx ports.Transaction, accId int64, amount decimal.Decimal) error {
-	args := m.Called(ctx, tx, accId, amount)
-	return args.Error(0)
-}
-
 func TestTransactionService_Save_Success(t *testing.T) {
 	ctx := testutils.InjectLoggerIntoContext(context.Background())
 
-	mockDB := new(MockDatabase)
-	mockAccRepo := new(MockAccountRepository)
-	mockRepo := new(MockTransactionRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockAccRepo := new(mocks.MockAccountRepository)
+	mockRepo := new(mocks.MockTransactionRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &TransactionServiceImpl{
+	service := &services.TransactionServiceImpl{
 		DB:                    mockDB,
 		TransactionRepository: mockRepo,
 		AccountRepository:     mockAccRepo,
@@ -83,12 +67,12 @@ func TestTransactionService_Save_Success(t *testing.T) {
 func TestTransactionService_Save_AccountNotFound(t *testing.T) {
 	ctx := testutils.InjectLoggerIntoContext(context.Background())
 
-	mockDB := new(MockDatabase)
-	mockAccRepo := new(MockAccountRepository)
-	mockRepo := new(MockTransactionRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockAccRepo := new(mocks.MockAccountRepository)
+	mockRepo := new(mocks.MockTransactionRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &TransactionServiceImpl{
+	service := &services.TransactionServiceImpl{
 		DB:                    mockDB,
 		TransactionRepository: mockRepo,
 		AccountRepository:     mockAccRepo,
@@ -123,12 +107,12 @@ func TestTransactionService_Save_AccountNotFound(t *testing.T) {
 func TestTransactionService_Save_InsufficientBalance(t *testing.T) {
 	ctx := testutils.InjectLoggerIntoContext(context.Background())
 
-	mockDB := new(MockDatabase)
-	mockAccRepo := new(MockAccountRepository)
-	mockRepo := new(MockTransactionRepository)
-	mockTx := new(MockTransaction)
+	mockDB := new(mocks.MockDatabase)
+	mockAccRepo := new(mocks.MockAccountRepository)
+	mockRepo := new(mocks.MockTransactionRepository)
+	mockTx := new(mocks.MockTransaction)
 
-	service := &TransactionServiceImpl{
+	service := &services.TransactionServiceImpl{
 		DB:                    mockDB,
 		TransactionRepository: mockRepo,
 		AccountRepository:     mockAccRepo,

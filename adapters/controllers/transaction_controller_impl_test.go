@@ -1,8 +1,7 @@
-package controllers
+package controllers_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,26 +12,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"transfer-system/adapters/controllers"
 	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/entities"
 	"transfer-system/internal/testutils"
+	"transfer-system/mocks"
 	appErrors "transfer-system/pkg/errors"
 )
-
-type MockTransactionService struct {
-	mock.Mock
-}
-
-func (m *MockTransactionService) Save(ctx context.Context, req *entities.Transaction) error {
-	args := m.Called(ctx, req)
-	return args.Error(0)
-}
 
 func TestTransactionController_Save_Success(t *testing.T) {
 	e := echo.New()
 
-	mockService := new(MockTransactionService)
-	controller := &TransactionController{TransactionService: mockService}
+	mockService := new(mocks.MockTransactionService)
+	controller := &controllers.TransactionController{TransactionService: mockService}
 
 	reqBody := dto.TransactionRequest{
 		SourceAccountID:      123,
@@ -70,8 +62,8 @@ func TestTransactionController_Save_Success(t *testing.T) {
 func TestTransactionController_Save_InsufficientBalance(t *testing.T) {
 	e := echo.New()
 
-	mockService := new(MockTransactionService)
-	controller := &TransactionController{TransactionService: mockService}
+	mockService := new(mocks.MockTransactionService)
+	controller := &controllers.TransactionController{TransactionService: mockService}
 
 	reqBody := dto.TransactionRequest{
 		SourceAccountID:      123,
@@ -109,8 +101,8 @@ func TestTransactionController_Save_InsufficientBalance(t *testing.T) {
 
 func TestTransactionController_Save_InvalidAmountFormat(t *testing.T) {
 	e := echo.New()
-	mockService := new(MockTransactionService)
-	controller := &TransactionController{TransactionService: mockService}
+	mockService := new(mocks.MockTransactionService)
+	controller := &controllers.TransactionController{TransactionService: mockService}
 
 	reqBody := dto.TransactionRequest{
 		SourceAccountID:      123,
@@ -142,8 +134,8 @@ func TestTransactionController_Save_InvalidAmountFormat(t *testing.T) {
 func TestTransactionController_Save_AccountNotFound(t *testing.T) {
 	e := echo.New()
 
-	mockService := new(MockTransactionService)
-	controller := &TransactionController{TransactionService: mockService}
+	mockService := new(mocks.MockTransactionService)
+	controller := &controllers.TransactionController{TransactionService: mockService}
 
 	reqBody := dto.TransactionRequest{
 		SourceAccountID:      123,

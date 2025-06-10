@@ -1,8 +1,7 @@
-package controllers
+package controllers_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -15,29 +14,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"transfer-system/adapters/controllers"
 	"transfer-system/adapters/web/dto"
 	"transfer-system/domain/entities"
 	"transfer-system/internal/testutils"
+	"transfer-system/mocks"
 )
-
-type MockAccountService struct {
-	mock.Mock
-}
-
-func (m *MockAccountService) Save(ctx context.Context, acc *entities.Account) error {
-	args := m.Called(ctx, acc)
-	return args.Error(0)
-}
-
-func (m *MockAccountService) FindById(ctx context.Context, accountId int64) (*entities.Account, error) {
-	args := m.Called(ctx, accountId)
-	return args.Get(0).(*entities.Account), args.Error(1)
-}
 
 func TestAccountController_Create_Success(t *testing.T) {
 	e := echo.New()
-	mockService := new(MockAccountService)
-	controller := &AccountController{AccountService: mockService}
+	mockService := new(mocks.MockAccountService)
+	controller := &controllers.AccountController{AccountService: mockService}
 
 	reqBody := dto.AccountRequest{
 		AccountID: 12345,
@@ -70,7 +57,7 @@ func TestAccountController_Create_Success(t *testing.T) {
 
 func TestAccountController_Create_InvalidBalanceFormat(t *testing.T) {
 	e := echo.New()
-	controller := &AccountController{}
+	controller := &controllers.AccountController{}
 	reqBody := dto.AccountRequest{
 		AccountID: 12345,
 		Balance:   "abc", // invalid
@@ -90,8 +77,8 @@ func TestAccountController_Create_InvalidBalanceFormat(t *testing.T) {
 
 func TestAccountController_FindById_Success(t *testing.T) {
 	e := echo.New()
-	mockService := new(MockAccountService)
-	controller := &AccountController{AccountService: mockService}
+	mockService := new(mocks.MockAccountService)
+	controller := &controllers.AccountController{AccountService: mockService}
 
 	accId := int64(12345)
 	expectedResp := &entities.Account{
@@ -119,8 +106,8 @@ func TestAccountController_FindById_Success(t *testing.T) {
 
 func TestAccountController_FindById_NotFound(t *testing.T) {
 	e := echo.New()
-	mockService := new(MockAccountService)
-	controller := &AccountController{AccountService: mockService}
+	mockService := new(mocks.MockAccountService)
+	controller := &controllers.AccountController{AccountService: mockService}
 
 	accId := int64(99999)
 	mockService.On("FindById", mock.Anything, accId).Return(&entities.Account{}, errors.New("Account not found"))

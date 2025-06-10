@@ -22,7 +22,7 @@ type AccountController struct {
 	AccountService ports.AccountService
 }
 
-func (controller *AccountController) Create(ctx echo.Context) error {
+func (c *AccountController) Create(ctx echo.Context) error {
 	logger, _ := ctx.Request().Context().Value(logger.LoggerContextKey).(*logrus.Entry)
 	accountRequest := dto.AccountRequest{}
 
@@ -58,7 +58,7 @@ func (controller *AccountController) Create(ctx echo.Context) error {
 		Balance:   initialBalanceDecimal,
 	}
 
-	accountResponse, err := controller.AccountService.Save(ctx.Request().Context(), internalServiceRequest)
+	err = c.AccountService.Save(ctx.Request().Context(), internalServiceRequest)
 
 	if err != nil {
 		var appErr *appErrors.AppError
@@ -80,7 +80,7 @@ func (controller *AccountController) Create(ctx echo.Context) error {
 	response := dto.WebResponse{
 		Message: "success create account",
 		Status:  1,
-		Data:    accountResponse,
+		Data:    nil,
 	}
 
 	return ctx.JSON(http.StatusCreated, response)
@@ -106,16 +106,21 @@ func (c *AccountController) FindById(ctx echo.Context) error {
 		logger.Error("Error find by id controller: ", err)
 
 		return ctx.JSON(http.StatusNotFound, dto.WebResponse{
-			Message: "Account id not found",
+			Message: "Account not found",
 			Status:  0,
 			Data:    nil,
 		})
 	}
 
+	accountResponse := &dto.AccountResponse{
+		AccountID: account.AccountID,
+		Balance:   account.Balance.String(),
+	}
+
 	response := dto.WebResponse{
 		Message: "success get account by id",
 		Status:  1,
-		Data:    &account,
+		Data:    accountResponse,
 	}
 
 	return ctx.JSON(http.StatusOK, response)

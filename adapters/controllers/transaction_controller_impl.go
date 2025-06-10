@@ -21,7 +21,7 @@ type TransactionController struct {
 	TransactionService ports.TransactionService
 }
 
-func (controller *TransactionController) Save(ctx echo.Context) error {
+func (c *TransactionController) Save(ctx echo.Context) error {
 	logger, _ := ctx.Request().Context().Value(logger.LoggerContextKey).(*logrus.Entry)
 	transactionRequest := dto.TransactionRequest{}
 
@@ -58,7 +58,7 @@ func (controller *TransactionController) Save(ctx echo.Context) error {
 		Amount:               amountDecimal,
 	}
 
-	accountResponse, err := controller.TransactionService.Save(ctx.Request().Context(), internalServiceRequest)
+	err = c.TransactionService.Save(ctx.Request().Context(), internalServiceRequest)
 
 	if err != nil {
 		var appErr *appErrors.AppError
@@ -80,7 +80,7 @@ func (controller *TransactionController) Save(ctx echo.Context) error {
 	response := dto.WebResponse{
 		Message: "transaction success",
 		Status:  1,
-		Data:    accountResponse,
+		Data:    nil,
 	}
 
 	return ctx.JSON(http.StatusCreated, response)

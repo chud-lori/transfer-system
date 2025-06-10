@@ -49,7 +49,7 @@ func NewDatabase(dbURL string, logger *logrus.Logger) (ports.Database, error) {
 // Only connection methods for Database
 func (p *Database) BeginTx(ctx context.Context) (ports.Transaction, error) {
 	tx, err := p.db.BeginTx(ctx, &sql.TxOptions{
-		Isolation: sql.LevelReadCommitted,
+		Isolation: sql.LevelRepeatableRead, // isolation during transaction
 	})
 	if err != nil {
 		return nil, err

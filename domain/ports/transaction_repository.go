@@ -10,5 +10,5 @@ import (
 
 type TransactionRepository interface {
 	Save(ctx context.Context, tx Transaction, transaction *entities.Transaction) (*entities.Transaction, error)
-	UpdateBalance(ctx context.Context, tx Transaction, AccountID int64, amount decimal.Decimal) error
+	UpdateBalance(ctx context.Context, tx Transaction, accountID int64, amount decimal.Decimal) error
 }

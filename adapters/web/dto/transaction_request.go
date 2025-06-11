@@ -6,6 +6,6 @@ type TransactionRequest struct {
 	SourceAccountID int64 `json:"source_account_id"`
 	// @example 456
 	DestinationAccountID int64 `json:"destination_account_id"`
-	// @example 100.23344
+	// @example 100.12345
 	Amount string `json:"amount"`
 }

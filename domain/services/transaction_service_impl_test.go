@@ -8,17 +8,18 @@ import (
 
 	"transfer-system/domain/entities"
 	"transfer-system/domain/services"
-	"transfer-system/internal/testutils"
 	"transfer-system/mocks"
 	appErrors "transfer-system/pkg/errors"
+	"transfer-system/pkg/logger"
 
 	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestTransactionService_Save_Success(t *testing.T) {
-	ctx := testutils.InjectLoggerIntoContext(context.Background())
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
 	mockDB := new(mocks.MockDatabase)
 	mockAccRepo := new(mocks.MockAccountRepository)
@@ -65,7 +66,7 @@ func TestTransactionService_Save_Success(t *testing.T) {
 }
 
 func TestTransactionService_Save_AccountNotFound(t *testing.T) {
-	ctx := testutils.InjectLoggerIntoContext(context.Background())
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
 	mockDB := new(mocks.MockDatabase)
 	mockAccRepo := new(mocks.MockAccountRepository)
@@ -87,7 +88,6 @@ func TestTransactionService_Save_AccountNotFound(t *testing.T) {
 
 	mockDB.On("BeginTx", mock.Anything).Return(mockTx, nil)
 	mockAccRepo.On("FindById", mock.Anything, mockTx, transaction.SourceAccountID).Return(nil, sql.ErrNoRows)
-	// mockTx.On("Commit").Return(nil).Times(0)
 	mockTx.On("Rollback").Return(nil)
 
 	err := service.Save(ctx, transaction)
@@ -105,7 +105,7 @@ func TestTransactionService_Save_AccountNotFound(t *testing.T) {
 }
 
 func TestTransactionService_Save_InsufficientBalance(t *testing.T) {
-	ctx := testutils.InjectLoggerIntoContext(context.Background())
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.NewEntry(logrus.New()))
 
 	mockDB := new(mocks.MockDatabase)
 	mockAccRepo := new(mocks.MockAccountRepository)

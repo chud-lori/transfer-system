@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 
 	"transfer-system/domain/entities"
 	"transfer-system/domain/ports"
@@ -41,10 +42,19 @@ func (repository *TransactionRepositoryPostgre) UpdateBalance(ctx context.Contex
 			UPDATE accounts
 			SET balance = balance + $1
 			WHERE id = $2`
-	_, err := tx.ExecContext(ctx, query, amount, accountID)
+	res, err := tx.ExecContext(ctx, query, amount, accountID)
 	if err != nil {
 		logger.WithError(err).Error("Failed to update account balance")
 		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		logger.WithError(err).Error("Failed to get rows affected")
+		return err
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("no account found with id %d", accountID)
 	}
 
 	return nil

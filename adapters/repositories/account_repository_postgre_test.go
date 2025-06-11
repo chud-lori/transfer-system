@@ -3,204 +3,108 @@ package repositories_test
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"testing"
 	"transfer-system/adapters/repositories"
 	"transfer-system/domain/entities"
-	"transfer-system/domain/ports"
-	"transfer-system/mocks"
+	"transfer-system/internal/testutils"
 	"transfer-system/pkg/logger"
 
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-type TestableAccountRepository struct {
-	*repositories.AccountRepositoryPostgre
-	mockQueryRow func(ctx context.Context, query string, args ...interface{}) (int64, error)
-	mockFindRow  func(ctx context.Context, query string, args ...interface{}) (*entities.Account, error)
-}
+func TestAccountRepositoryPostgre_Save_Success(t *testing.T) {
+	db := testutils.SetupTestDB(t)
+	tx := testutils.SetupTestTx(t, db)
+	defer tx.Rollback()
 
-func (r *TestableAccountRepository) Save(ctx context.Context, tx ports.Transaction, account *entities.Account) (*entities.Account, error) {
-	if r.mockQueryRow != nil {
-		id, err := r.mockQueryRow(ctx, "", account.AccountID, account.Balance)
-		if err != nil {
-			return nil, err
-		}
-		account.AccountID = id
-		return account, nil
-	}
-	return r.AccountRepositoryPostgre.Save(ctx, tx, account)
-}
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.New())
 
-func (r *TestableAccountRepository) FindById(ctx context.Context, tx ports.Transaction, id int64) (*entities.Account, error) {
-	if r.mockFindRow != nil {
-		return r.mockFindRow(ctx, "", id)
-	}
-	return r.AccountRepositoryPostgre.FindById(ctx, tx, id)
-}
-
-func TestAccountRepositoryPostgre_Save(t *testing.T) {
-	// Setup logger context
-	baseLogger := logrus.New()
-	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, baseLogger)
-
-	tests := []struct {
-		name          string
-		account       *entities.Account
-		mockReturn    int64
-		mockError     error
-		expectedError bool
-		expectedID    int64
-	}{
-		{
-			name: "successful save",
-			account: &entities.Account{
-				AccountID: 1,
-				Balance:   decimal.NewFromFloat(100.50),
-			},
-			mockReturn:    123,
-			mockError:     nil,
-			expectedError: false,
-			expectedID:    123,
-		},
-		{
-			name: "database error",
-			account: &entities.Account{
-				AccountID: 1,
-				Balance:   decimal.NewFromFloat(100.50),
-			},
-			mockReturn:    0,
-			mockError:     errors.New("database error"),
-			expectedError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup testable repository
-			repo := &TestableAccountRepository{
-				AccountRepositoryPostgre: &repositories.AccountRepositoryPostgre{
-					DB: &mocks.MockDatabase{},
-				},
-				mockQueryRow: func(ctx context.Context, query string, args ...interface{}) (int64, error) {
-					return tt.mockReturn, tt.mockError
-				},
-			}
-
-			// Execute
-			result, err := repo.Save(ctx, &mocks.MockTransaction{}, tt.account)
-
-			// Assert
-			if tt.expectedError {
-				assert.Error(t, err)
-				assert.Nil(t, result)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-				assert.Equal(t, tt.expectedID, result.AccountID)
-			}
-		})
-	}
-}
-
-func TestAccountRepositoryPostgre_FindById(t *testing.T) {
-	// Setup logger context
-	baseLogger := logrus.New()
-	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, baseLogger)
-
-	tests := []struct {
-		name            string
-		accountID       int64
-		mockAccount     *entities.Account
-		mockError       error
-		expectedError   bool
-		expectedAccount *entities.Account
-	}{
-		{
-			name:      "successful find",
-			accountID: 1,
-			mockAccount: &entities.Account{
-				AccountID: 1,
-				Balance:   decimal.NewFromFloat(100.50),
-			},
-			mockError:     nil,
-			expectedError: false,
-			expectedAccount: &entities.Account{
-				AccountID: 1,
-				Balance:   decimal.NewFromFloat(100.50),
-			},
-		},
-		{
-			name:            "account not found",
-			accountID:       999,
-			mockAccount:     nil,
-			mockError:       sql.ErrNoRows,
-			expectedError:   true,
-			expectedAccount: nil,
-		},
-		{
-			name:            "database error",
-			accountID:       1,
-			mockAccount:     nil,
-			mockError:       errors.New("database error"),
-			expectedError:   true,
-			expectedAccount: nil,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup testable repository
-			repo := &TestableAccountRepository{
-				AccountRepositoryPostgre: &repositories.AccountRepositoryPostgre{
-					DB: &mocks.MockDatabase{},
-				},
-				mockFindRow: func(ctx context.Context, query string, args ...interface{}) (*entities.Account, error) {
-					return tt.mockAccount, tt.mockError
-				},
-			}
-
-			// Execute
-			result, err := repo.FindById(ctx, &mocks.MockTransaction{}, tt.accountID)
-
-			// Assert
-			if tt.expectedError {
-				assert.Error(t, err)
-				if tt.mockError == sql.ErrNoRows {
-					assert.Equal(t, sql.ErrNoRows, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-				assert.Equal(t, tt.expectedAccount.AccountID, result.AccountID)
-				assert.True(t, tt.expectedAccount.Balance.Equal(result.Balance))
-			}
-		})
-	}
-}
-
-// Benchmark tests
-func BenchmarkAccountRepositoryPostgre_Save(b *testing.B) {
-	// Setup
-	baseLogger := logrus.New()
-	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, baseLogger)
-
-	repo := &TestableAccountRepository{
-		AccountRepositoryPostgre: &repositories.AccountRepositoryPostgre{},
-		mockQueryRow: func(ctx context.Context, query string, args ...interface{}) (int64, error) {
-			return 1, nil
-		},
-	}
+	repo := &repositories.AccountRepositoryPostgre{DB: db}
 
 	account := &entities.Account{
-		AccountID: 1,
-		Balance:   decimal.NewFromFloat(100.0),
+		AccountID: 12345678,
+		Balance:   decimal.NewFromFloat(250.75),
 	}
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = repo.Save(ctx, &mocks.MockTransaction{}, account)
+	// Execute
+	savedAccount, err := repo.Save(ctx, tx, account)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.NotNil(t, savedAccount)
+	assert.Equal(t, account.AccountID, savedAccount.AccountID)
+	assert.True(t, account.Balance.Equal(savedAccount.Balance))
+}
+
+func TestAccountRepositoryPostgre_FindById_Success(t *testing.T) {
+	// Setup
+	db := testutils.SetupTestDB(t)
+	tx := testutils.SetupTestTx(t, db)
+	defer tx.Rollback()
+
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.New())
+
+	repo := &repositories.AccountRepositoryPostgre{DB: db}
+
+	account := &entities.Account{
+		AccountID: 987654321,
+		Balance:   decimal.NewFromFloat(999.99),
 	}
+
+	// Insert first so we can retrieve
+	_, err := repo.Save(ctx, tx, account)
+	require.NoError(t, err)
+
+	// Execute
+	fetchedAccount, err := repo.FindById(ctx, tx, account.AccountID)
+
+	// Assert
+	assert.NoError(t, err)
+	assert.NotNil(t, fetchedAccount)
+	assert.Equal(t, account.AccountID, fetchedAccount.AccountID)
+	assert.True(t, account.Balance.Equal(fetchedAccount.Balance))
+}
+
+func TestAccountRepositoryPostgre_Save_Error(t *testing.T) {
+	db := testutils.SetupTestDB(t)
+	tx := testutils.SetupTestTx(t, db)
+	defer tx.Rollback()
+
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.New())
+
+	repo := &repositories.AccountRepositoryPostgre{DB: db}
+
+	account := &entities.Account{
+		AccountID: 10001,
+		Balance:   decimal.NewFromFloat(50.0),
+	}
+
+	// Insert once
+	_, err := repo.Save(ctx, tx, account)
+	require.NoError(t, err)
+
+	// Attempt to insert again with same ID
+	_, err = repo.Save(ctx, tx, account)
+	assert.Error(t, err, "Expected error due to duplicate primary key")
+}
+
+func TestAccountRepositoryPostgre_FindById_NotFound(t *testing.T) {
+	db := testutils.SetupTestDB(t)
+	tx := testutils.SetupTestTx(t, db)
+	defer tx.Rollback()
+
+	ctx := context.WithValue(context.Background(), logger.LoggerContextKey, logrus.New())
+
+	repo := &repositories.AccountRepositoryPostgre{DB: db}
+
+	// Try to find an ID that doesn't exist
+	nonExistentID := int64(999999)
+	acc, err := repo.FindById(ctx, tx, nonExistentID)
+
+	assert.Error(t, err)
+	assert.Nil(t, acc)
+	assert.Equal(t, sql.ErrNoRows, err)
 }

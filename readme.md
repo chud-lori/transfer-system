@@ -1,6 +1,6 @@
 # Transfer System
 
-A backend API for a transfer system, built with **Go** and **PostgreSQL**, following Clean Architecture principles.
+A backend API for a transfer system, built with **Go** and **PostgreSQL**, following Clean Architecture principles
 
 ## Features
 
@@ -15,10 +15,12 @@ A backend API for a transfer system, built with **Go** and **PostgreSQL**, follo
 ```
 adapters/         # Controllers, repositories, and web routes
 cmd/              # Application entrypoint (main.go)
+docs/             # Generated OpenAPI Specs
 domain/           # Business logic and interface definitions (ports)
 infrastructure/   # DB and external service implementations
+internal/         # Internal utilities, currently only contain for test
+mocks/            # Mocks for tests
 pkg/              # Shared packages (logger, config, etc.)
-utils/            # Helper utilities
 ```
 
 ## Prerequisites
@@ -99,6 +101,9 @@ This will spin up the app and a PostgreSQL container using the configurations in
 
 ---
 ## Run Tests
+The test require to use postgresql database, make sure to create `.env.test` in root project directory and create the test database
+
+To run test:
 `make test`
 
 ## API Endpoints
@@ -122,4 +127,5 @@ After running the application, access the interactive Swagger UI at:
 
 ## Notes
 
-- Ensure the database is up and running before starting the application.
+- Ensure the database is up and running before starting the application
+- Ensure the test database is up and running before starting the tests

@@ -167,12 +167,15 @@ const docTemplate = `{
     },
     "definitions": {
         "dto.AccountRequest": {
+            "description": "Account creation payload",
             "type": "object",
             "properties": {
                 "account_id": {
+                    "description": "Account ID\n@example 123",
                     "type": "integer"
                 },
                 "initial_balance": {
+                    "description": "Initial balance (string to allow decimal format)\n@example 100.23344",
                     "type": "string"
                 }
             }
@@ -189,15 +192,19 @@ const docTemplate = `{
             }
         },
         "dto.TransactionRequest": {
+            "description": "Transaction creation payload",
             "type": "object",
             "properties": {
                 "amount": {
+                    "description": "@example 100.23344",
                     "type": "string"
                 },
                 "destination_account_id": {
+                    "description": "@example 456",
                     "type": "integer"
                 },
                 "source_account_id": {
+                    "description": "@example 123",
                     "type": "integer"
                 }
             }

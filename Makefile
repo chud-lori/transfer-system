@@ -23,14 +23,14 @@ deps:
 build:
 	@echo "Building binary..."
 	@mkdir -p $(BUILD_DIR)
-	@echo "DEBUG: Executing build command: go build -o $(BUILD_DIR)/$(APP_NAME) ./cmd"
 	@go build -o $(BUILD_DIR)/$(APP_NAME) ./cmd
 	@echo "Build successful. Binary: $(BUILD_DIR)/$(APP_NAME)"
 
 # Generate Swagger documentation
 .PHONY: swagger
 swagger:
-	swag init -g cmd/api/main.go
+	@echo "Generating Swagger documentation..."
+	@swag init -g cmd/main.go
 
 # Run the application
 .PHONY: run

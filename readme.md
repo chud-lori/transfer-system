@@ -76,11 +76,10 @@ and import it
 
 `docker exec -it <container_name> psql -U postgres -d <database_name> -f /tmp/db.sql`
 
+
+and build using `make`
 ```sh
-make         # Runs tests, builds the binary, and starts the app
-make build   # Builds the app into ./cmd/myapp
-make run     # Runs the app
-make clean   # Cleans the build artifacts
+make
 ```
 
 ### Option 2: Run Locally with Go
@@ -102,7 +101,7 @@ This will spin up the app and a PostgreSQL container using the configurations in
 ## Run Tests
 `make test`
 
-## 📬 API Endpoints
+## API Endpoints
 
 | Method | Endpoint         | Description                  |
 |--------|------------------|------------------------------|
@@ -111,6 +110,13 @@ This will spin up the app and a PostgreSQL container using the configurations in
 | POST   | `/transactions`  | Initiate a new transaction   |
 
 (Refer to `adapters/web/routes.go` for full routing details.)
+
+---
+
+## API Documentation
+
+After running the application, access the interactive Swagger UI at:
+**[http://localhost:8080/docs/index.html](http://localhost:8080/docs/index.html)**
 
 ---
 

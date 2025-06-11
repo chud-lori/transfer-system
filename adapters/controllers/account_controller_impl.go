@@ -22,6 +22,17 @@ type AccountController struct {
 	AccountService ports.AccountService
 }
 
+// Create Acount godoc
+// @Summary      Create Account
+// @Description  Add new account with initial balance
+// @Tags         Accounts
+// @Accept       json
+// @Produce      json
+// @Param body body dto.AccountRequest true "Account creation payload" example({"account_id":123,"initial_balance":"100.23344"})
+// @Success      201   {object}  dto.WebResponse
+// @Failure      400   {object}  dto.WebResponse
+// @Failure      500   {object}  dto.WebResponse
+// @Router       /accounts [post]
 func (c *AccountController) Create(ctx echo.Context) error {
 	logger, _ := ctx.Request().Context().Value(logger.LoggerContextKey).(*logrus.Entry)
 	accountRequest := dto.AccountRequest{}
@@ -86,6 +97,18 @@ func (c *AccountController) Create(ctx echo.Context) error {
 	return ctx.JSON(http.StatusCreated, response)
 }
 
+// FindById godoc
+// @Summary Get Account by ID
+// @Description Get an account by its ID
+// @ID get-account-by-id
+// @Tags         Accounts
+// @Accept json
+// @Produce json
+// @Param accountId path int true "Account ID" // Name is 'accountId'
+// @Success 200 {object} dto.WebResponse{data=dto.AccountResponse} "Successfully retrieved account"
+// @Failure 400 {object} dto.WebResponse "Invalid accountId format"
+// @Failure 404 {object} dto.WebResponse "Account not found"
+// @Router /accounts/{accountId} [get] // Path parameter is {accountId}
 func (c *AccountController) FindById(ctx echo.Context) error {
 	logger, _ := ctx.Request().Context().Value("logger").(*logrus.Entry)
 	accountIdStr := ctx.Param("accountId")

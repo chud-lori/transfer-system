@@ -1,4 +1,3 @@
-# Project configuration
 APP_NAME := transfer-system
 BUILD_DIR := bin
 
@@ -28,7 +27,12 @@ build:
 	@go build -o $(BUILD_DIR)/$(APP_NAME) ./cmd
 	@echo "Build successful. Binary: $(BUILD_DIR)/$(APP_NAME)"
 
-# Run the application (depends on build)
+# Generate Swagger documentation
+.PHONY: swagger
+swagger:
+	swag init -g cmd/api/main.go
+
+# Run the application
 .PHONY: run
 run: build
 	@echo "Running application..."
@@ -48,5 +52,6 @@ help:
 	@echo "  make test      Run all tests"
 	@echo "  make deps      Download Go dependencies"
 	@echo "  make build     Build the Go binary into $(BUILD_DIR)/$(APP_NAME)"
+	@echo "  make swagger   Generate Swagger documentation"
 	@echo "  make run       Run the application"
 	@echo "  make clean     Remove built binaries"

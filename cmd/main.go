@@ -16,10 +16,19 @@ import (
 	"transfer-system/infrastructure/datastore"
 	"transfer-system/pkg/logger"
 
+	_ "transfer-system/docs"
+
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
+// @title Transfer System API
+// @version 1.0
+// @description A simple API for managing accounts and transactions in a transfer system
+
+// @host localhost:8080
+// @BasePath /
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -64,6 +73,7 @@ func main() {
 	}
 
 	e := echo.New()
+	e.GET("/docs/*", echoSwagger.WrapHandler)
 
 	web.AccountRouter(accountController, e)
 	web.TransactionRouter(transactionController, e)

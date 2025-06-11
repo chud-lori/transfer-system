@@ -1,0 +1,136 @@
+basePath: /
+definitions:
+  dto.AccountRequest:
+    properties:
+      account_id:
+        type: integer
+      initial_balance:
+        type: string
+    type: object
+  dto.AccountResponse:
+    properties:
+      account_id:
+        type: integer
+      balance:
+        type: string
+    type: object
+  dto.TransactionRequest:
+    properties:
+      amount:
+        type: string
+      destination_account_id:
+        type: integer
+      source_account_id:
+        type: integer
+    type: object
+  dto.WebResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: A simple API for managing accounts and transactions in a transfer system
+  title: Transfer System API
+  version: "1.0"
+paths:
+  /accounts:
+    post:
+      consumes:
+      - application/json
+      description: Add new account with initial balance
+      parameters:
+      - description: Account creation payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AccountRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Create Account
+      tags:
+      - Accounts
+  /accounts/{accountId}:
+    get:
+      consumes:
+      - application/json
+      description: Get an account by its ID
+      operationId: get-account-by-id
+      parameters:
+      - description: Account ID
+        in: path
+        name: accountId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved account
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.WebResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AccountResponse'
+              type: object
+        "400":
+          description: Invalid accountId format
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "404":
+          description: Account not found
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Get Account by ID
+      tags:
+      - Accounts
+  /transactions:
+    post:
+      consumes:
+      - application/json
+      description: Transfer amount from source account to destination account
+      parameters:
+      - description: Transaction payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TransactionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.WebResponse'
+      summary: Create Transaction
+      tags:
+      - Transactions
+swagger: "2.0"

@@ -21,6 +21,17 @@ type TransactionController struct {
 	TransactionService ports.TransactionService
 }
 
+// Save Transaction godoc
+// @Summary      Create Transaction
+// @Description  Transfer amount from source account to destination account
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        body  body      dto.TransactionRequest  true  "Transaction payload"  example({"source_account_id":1,"destination_account_id":2,"amount":"100.00"})
+// @Success      201   {object}  dto.WebResponse
+// @Failure      400   {object}  dto.WebResponse
+// @Failure      500   {object}  dto.WebResponse
+// @Router       /transactions [post]
 func (c *TransactionController) Save(ctx echo.Context) error {
 	logger, _ := ctx.Request().Context().Value(logger.LoggerContextKey).(*logrus.Entry)
 	transactionRequest := dto.TransactionRequest{}
